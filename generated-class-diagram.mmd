@@ -1,0 +1,62 @@
+classDiagram
+    class FileProcessorApplication {
+        +main(String[])
+    }
+
+    class FileController {
+        +handle(String): String
+    }
+
+    class ProviderApplication {
+        +main(String[])
+    }
+
+    class ProviderController {
+        +handle(String): String
+    }
+
+    class ProviderConfig {
+        -String providerId
+        -List<String> stepNames
+        +PaymentProviderProcessor processor(StepRegistry)
+    }
+
+    class PaymentProviderProcessor {
+        -List<Function<String, String>> steps
+        +process(String): String
+    }
+
+    class StepRegistry {
+        -Map<String, Function<String, String>> steps
+        +getStep(String): Function<String, String>
+    }
+
+    class DecryptStep {
+        +apply(String): String
+    }
+
+    class TransformStep {
+        +apply(String): String
+    }
+
+    class MassageStep {
+        +apply(String): String
+    }
+
+    class InvokeStep {
+        +apply(String): String
+    }
+
+    FileProcessorApplication --> FileController
+    ProviderApplication --> ProviderController
+    ProviderController --> PaymentProviderProcessor
+    ProviderConfig --> PaymentProviderProcessor
+    PaymentProviderProcessor --> "1..*" Function
+    StepRegistry --> "1" ApplicationContext
+    StepRegistry --> "1..*" Function
+    ProviderConfig --> StepRegistry
+
+    DecryptStep --> Function
+    TransformStep --> Function
+    MassageStep --> Function
+    InvokeStep --> Function

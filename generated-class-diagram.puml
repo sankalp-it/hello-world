@@ -1,0 +1,33 @@
+@startuml
+class MassageStep {
+}
+class TransformStep {
+}
+class InvokeStep {
+}
+class DecryptStep {
+}
+class StepRegistry {
+}
+class PaymentProviderProcessor {
+}
+class DecryptStep {
+}
+class MassageStep {
+}
+class TransformStep {
+}
+class InvokeStep {
+}
+class FileController {
+}
+class FileProcessorApplication {
+}
+class ProviderConfig {
+  List<String> stepNames
+}
+class ProviderApplication {
+}
+class ProviderController {
+}
+@enduml

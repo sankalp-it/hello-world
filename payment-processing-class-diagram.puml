@@ -1,0 +1,62 @@
+@startuml PaymentProcessing
+
+package "Shared Steps" {
+  class DecryptStep {
+    +apply(String): String
+  }
+
+  class TransformStep {
+    +apply(String): String
+  }
+
+  class MassageStep {
+    +apply(String): String
+  }
+
+  class InvokeStep {
+    +apply(String): String
+  }
+
+  interface Function<T, R>
+}
+
+package "Pipeline" {
+  class StepRegistry {
+    +getStep(String): Function<String, String>
+  }
+
+  class PaymentProviderProcessor {
+    -steps: List<Function<String, String>>
+    +process(String): String
+  }
+}
+
+package "Provider Service" {
+  class ProviderConfig {
+    -providerId: String
+    -stepNames: List<String>
+    +processor(StepRegistry): PaymentProviderProcessor
+  }
+
+  class ProviderController {
+    +handle(String): String
+  }
+}
+
+package "File Processor" {
+  class FileProcessorApplication
+  class FileController
+}
+
+Function <|.. DecryptStep
+Function <|.. TransformStep
+Function <|.. MassageStep
+Function <|.. InvokeStep
+
+StepRegistry --> Function
+PaymentProviderProcessor --> Function
+ProviderConfig --> StepRegistry
+ProviderConfig --> PaymentProviderProcessor
+ProviderController --> PaymentProviderProcessor
+
+@enduml

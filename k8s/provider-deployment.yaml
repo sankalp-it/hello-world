@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: provider-provider1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: provider-provider1
+  template:
+    metadata:
+      labels:
+        app: provider-provider1
+    spec:
+      containers:
+      - name: provider1
+        image: your-repo/provider-service:provider1
+        ports:
+        - containerPort: 8080
+        env:
+        - name: PROVIDER_STEPS
+          value: decrypt,transform,invoke
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: provider-provider1
+spec:
+  selector:
+    app: provider-provider1
+  ports:
+  - port: 8080
+    targetPort: 8080
