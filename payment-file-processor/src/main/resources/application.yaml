@@ -1,0 +1,31 @@
+# placeholder
+spring:
+  application:
+    name: file-processor
+  cloud:
+    aws:
+      region:
+        static: us-east-1
+      credentials:
+        access-key: YOUR_ACCESS_KEY
+        secret-key: YOUR_SECRET_KEY
+      sqs:
+        listener:
+          simple:
+            auto-startup: true
+            max-number-of-messages: 10
+            wait-time-out: 20
+
+file:
+  topic:
+    map:
+      provider1: provider1-topic
+      provider2: provider2-topic
+
+kafka:
+  bootstrap-servers: localhost:9092
+
+logging:
+  level:
+    root: INFO
+    com.example: DEBUG

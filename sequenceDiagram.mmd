@@ -1,0 +1,20 @@
+
+sequenceDiagram
+    participant User
+    participant SQS as FileUpload SQS
+    participant FileProcessor
+    participant Kafka
+    participant PaymentProcessor
+    participant PaymentResponseSQS as Response SQS
+    participant PaymentResponseService
+    participant DynamoDB
+
+    User->>SQS: Upload SQS message (filename, s3url)
+    SQS->>FileProcessor: Trigger SQS listener
+    FileProcessor->>FileProcessor: Determine provider from filename
+    FileProcessor->>Kafka: Send message to provider-specific topic
+    Kafka->>PaymentProcessor: Consume message
+    PaymentProcessor->>DynamoDB: Write PaymentMessage (status=PMT-MSGSENT)
+    PaymentProcessor->>PaymentResponseSQS: Send processing result
+    PaymentResponseSQS->>PaymentResponseService: Trigger SQS listener
+    PaymentResponseService->>DynamoDB: Update status to PMT-PROCESSED

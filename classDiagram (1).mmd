@@ -1,0 +1,55 @@
+
+classDiagram
+    class PaymentFileProcessor {
+        +receiveMessage(String)
+        +determineProvider(String)
+    }
+
+    class StepRegistry {
+        +getSteps(String): List<PaymentProcessStep>
+    }
+
+    class PaymentProviderProcessor {
+        -List<PaymentProcessStep> steps
+        +process(String): String
+    }
+
+    class PaymentProcessStep {
+        <<interface>>
+        +execute(String): String
+    }
+
+    class DecryptStep {
+        +execute(String): String
+    }
+
+    class TransformStep {
+        +execute(String): String
+    }
+
+    class InvokeStep {
+        +execute(String): String
+    }
+
+    class KafkaPaymentListener {
+        +processPayment(String)
+    }
+
+    class PaymentResponseService {
+        +processResponse(String)
+    }
+
+    class DynamoDBService {
+        +savePayment(PaymentMessage)
+        +updateStatus(String, String)
+    }
+
+    PaymentFileProcessor --> StepRegistry
+    StepRegistry --> PaymentProviderProcessor
+    PaymentProviderProcessor --> PaymentProcessStep
+    PaymentProcessStep <|.. DecryptStep
+    PaymentProcessStep <|.. TransformStep
+    PaymentProcessStep <|.. InvokeStep
+    KafkaPaymentListener --> PaymentProviderProcessor
+    KafkaPaymentListener --> DynamoDBService
+    PaymentResponseService --> DynamoDBService

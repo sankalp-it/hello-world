@@ -1,27 +1,36 @@
 package com.shared.pipeline;
 
-import org.springframework.context.ApplicationContext;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import main.java.com.shared.pipeline.PaymentProcessStep;
 
 @Component
 public class StepRegistry {
-    private final Map<String, Function<String, String>> steps;
+    private final Map<String, PaymentProcessStep> steps;
 
-    public StepRegistry(ApplicationContext ctx) {
-        // Filter only Function<String, String> beans
-        this.steps = ctx.getBeansOfType(Function.class).entrySet().stream()
-            .filter(e -> e.getValue() instanceof Function<?, ?>)
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                e -> (Function<String, String>) e.getValue()
-            ));
+    // public StepRegistry(ApplicationContext ctx) {
+    //     // Filter only Function<String, String> beans
+    //     this.steps = ctx.getBeansOfType(Function.class).entrySet().stream()
+    //         .filter(e -> e.getValue() instanceof Function<?, ?>)
+    //         .collect(Collectors.toMap(
+    //             Map.Entry::getKey,
+    //             e -> (Function<String, String>) e.getValue()
+    //         ));
+    // }
+    @Autowired
+    public StepRegistry(List<PaymentProcessStep> steps) {
+        for (PaymentProcessStep step : steps) {
+            steps.put(step.getStepName(), step);
+        }
     }
 
-    public Function<String, String> getStep(String name) {
+    public String getStep(String name) {
         return steps.get(name);
     }
+    // public Function<String, String> getStep(String name) {
+    //     return steps.get(name);
+    // }
 }

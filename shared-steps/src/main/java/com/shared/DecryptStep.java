@@ -1,12 +1,13 @@
 
 package com.shared;
-import java.util.function.Function;
-
 import org.springframework.stereotype.Component;
 
+import main.java.com.shared.pipeline.PaymentProcessStep;
+
 @Component("decrypt")
-public class DecryptStep implements Function<String, String> {
-    public String apply(String input) {
+public class DecryptStep implements PaymentProcessStep
+ {
+    public String execute(String input) {
         return "[DECRYPTED] " + input;
     }
 }
