@@ -1,0 +1,46 @@
+classDiagram
+class PaymentMessageProcessor {
+  +providerProcessor: PaymentProviderProcessor
+  +processPayment(String message): void
+}
+class PaymentRepository {
+  +saveToDynamoDB(Object paymentMessage): void
+}
+class FileProcessorController {
+  +kafkaTemplate: String>
+  +prefixToTopicMap: String>
+  +receiveMessage(@Payload String message): void
+  +StringTokenizer(message, ","): new
+}
+class FileProcessingService {
+  +processFile(String filePath): void
+}
+class MassageStep {
+  +apply(String input): String
+}
+class TransformStep {
+  +apply(String input): String
+}
+class DecryptStep {
+  +execute(String input): String
+}
+class InvokeStep {
+  +apply(String input): String
+}
+class StepRegistry {
+  +steps: PaymentProcessStep>
+  +getStep(String name): String
+  +getStep(String name): String>
+}
+class PaymentProcessStep {
+  +getStepName(): String
+  +execute(String message): String
+}
+class PaymentProviderProcessor {
+  +steps: List<PaymentProcessStep>
+  +result: return
+  +process(String input): String
+}
+class SqsResponseListener {
+  +handleResponse(String message): void
+}
