@@ -1,0 +1,215 @@
+NEW app config
+provider:
+  name: provider1
+  steps:
+    - DECRYPT
+    - TRANSFORM
+    - INVOKE
+
+
+provider1-deployment.yaml
+yaml
+Copy
+Edit
+containers:
+- name: provider
+  image: your-registry/provider-service:latest
+  args: ["--spring.profiles.active=provider1"]
+
+
+1. Add Profiles in application.yaml
+In your shared module (provider-service), create profile-specific YAMLs:
+
+application.yaml (base)
+yaml
+Copy
+Edit
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+
+# Shared defaults here
+application-provider1.yaml
+yaml
+Copy
+Edit
+spring:
+  kafka:
+    consumer:
+      group-id: provider1-group
+payment:
+  kafka:
+    topic: provider1-topic
+application-provider2.yaml
+yaml
+Copy
+Edit
+spring:
+  kafka:
+    consumer:
+      group-id: provider2-group
+payment:
+  kafka:
+    topic: provider2-topic
+2. Read Topic from Config
+In your listener:
+
+java
+Copy
+Edit
+@Value("${payment.kafka.topic}")
+private String topic;
+
+@KafkaListener(topics = "#{@kafkaPaymentListener.topic}")
+public void listen(String message) {
+    // process...
+}
+3. Build Single JAR
+From the module root:
+
+bash
+Copy
+Edit
+mvn clean package
+You’ll get target/provider-service.jar.
+
+4. Create Two Docker Images
+Use the same Dockerfile but with different profile:
+
+Dockerfile
+Dockerfile
+Copy
+Edit
+FROM eclipse-temurin:17
+WORKDIR /app
+COPY target/provider-service.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
+Then build two images:
+
+bash
+Copy
+Edit
+docker build -t provider1-service --build-arg SPRING_PROFILE=provider1 .
+docker build -t provider2-service --build-arg SPRING_PROFILE=provider2 .
+Or override via CMD:
+
+dockerfile
+Copy
+Edit
+ENTRYPOINT ["java", "-jar", "app.jar"]
+CMD ["--spring.profiles.active=provider1"]
+Then override with:
+
+bash
+Copy
+Edit
+docker run provider-service --spring.profiles.active=provider2
+5. Kubernetes Deployments
+Create two deployments, same image but different command:
+
+provider1-deployment.yaml
+yaml
+Copy
+Edit
+containers:
+- name: provider
+  image: your-registry/provider-service:latest
+  args: ["--spring.profiles.active=provider1"]
+provider2-deployment.yaml
+yaml
+Copy
+Edit
+containers:
+- name: provider
+  image: your-registry/provider-service:latest
+  args: ["--spring.profiles.active=provider2"]
+
+
+✅ 1. Structure application-{profile}.yaml for each provider
+Each profile has its own step configuration:
+
+application-provider1.yaml
+yaml
+Copy
+Edit
+steps:
+  - decrypt
+  - massage
+  - invoke
+application-provider2.yaml
+yaml
+Copy
+Edit
+steps:
+  - transform
+  - invoke
+✅ 2. Define a Spring @ConfigurationProperties class
+java
+Copy
+Edit
+@Configuration
+@ConfigurationProperties(prefix = "steps")
+public class StepConfigProperties {
+
+    private List<String> steps;
+
+    public List<String> getSteps() {
+        return steps;
+    }
+
+    public void setSteps(List<String> steps) {
+        this.steps = steps;
+    }
+}
+Ensure this is registered with @EnableConfigurationProperties(StepConfigProperties.class) in a @Configuration or main class.
+
+✅ 3. Inject StepConfigProperties and build step sequence
+java
+Copy
+Edit
+@Component
+public class ProviderStepConfig {
+
+    private final StepConfigProperties configProperties;
+    private final Map<String, PaymentProcessStep> stepMap;
+
+    public ProviderStepConfig(StepConfigProperties configProperties, List<PaymentProcessStep> availableSteps) {
+        this.configProperties = configProperties;
+        this.stepMap = availableSteps.stream().collect(Collectors.toMap(
+            step -> step.getClass().getSimpleName().replace("Step", "").toLowerCase(), step -> step
+        ));
+    }
+
+    public List<PaymentProcessStep> getConfiguredSteps() {
+        return configProperties.getSteps().stream()
+            .map(stepMap::get)
+            .filter(Objects::nonNull)
+            .toList();
+    }
+}
+✅ 4. Wire into PaymentProviderProcessor
+java
+Copy
+Edit
+@Bean
+public PaymentProviderProcessor paymentProviderProcessor(ProviderStepConfig config) {
+    return new PaymentProviderProcessor(config.getConfiguredSteps());
+}
+✅ 5. Kubernetes Deployment Arguments
+In provider1-deployment.yaml:
+
+yaml
+Copy
+Edit
+containers:
+- name: provider
+  image: your-registry/provider-service:latest
+  args: ["--spring.profiles.active=provider1"]
+Spring Boot will automatically load application-provider1.yaml, which controls the steps field for the given deployment.
+
+✅ Summary
+✅ Step configurations are tied to Spring profiles
+
+✅ You can deploy provider1/provider2 as separate pods with --spring.profiles.active
+
+✅ Each pod will build its step pipeline dynamically from YAML config
