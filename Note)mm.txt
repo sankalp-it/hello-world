@@ -1,0 +1,54 @@
+C4 Level 1 – System Context Diagram (Mermaid)
+
+
+graph TD
+  PO[Product Owner] <---> Platform[AI/MCP Dev System]
+  Platform <---> JIRA[JIRA System]
+  Platform --> Figma[Figma Plugin]
+  Platform --> LLM[LLM Engine]
+  Figma --> CodeGen[UX/UI Code Generator]
+  LLM --> Tests[Gherkin & Test Generator]
+  CodeGen --> CICD[CI/CD Pipeline]
+  CICD --> Deploy[Deployment Environment]
+
+
+C4 Level 2 – Container Diagram (Mermaid)
+
+graph TD
+  subgraph AI/MCP Dev Platform
+    Integration[Integration Layer<br/>↔ JIRA, Figma, MCP]
+    Parser[Requirements Parser]
+    Prompter[Prompt Engine]
+    Generator[Wireframe Generator]
+    CodeGen[UI Code Generator<br/>→ React/Tailwind]
+    GherkinGen[Gherkin Test Generator]
+    Playwright[Playwright Runner<br/>↔ MCP Integration]
+    CICD[CI/CD Pipeline]
+  end
+
+  Integration --> Parser
+  Parser --> Prompter
+  Prompter --> Generator
+  Generator --> Figma[(Figma Plugin API)]
+  Prompter --> CodeGen
+  Prompter --> GherkinGen
+  GherkinGen --> Playwright
+  CodeGen --> CICD
+  Playwright --> CICD
+  CICD --> Deploy[Deployment Environment]
+
+C4 Level 3 – Component Diagram: Code & Test Generator (Mermaid)
+
+graph TD
+  subgraph Code_And_Test_Generator
+    Prompt[Prompt Engineering Module]
+    LLM[LLM Integration - Groq or OpenAI]
+    CodeGen[UI Code Synthesizer - React and Tailwind]
+    Gherkin[Gherkin Scenario Generator]
+    Playwright[Playwright Script Generator]
+  end
+
+  Prompt --> LLM
+  LLM --> CodeGen
+  LLM --> Gherkin
+  Gherkin --> Playwright
