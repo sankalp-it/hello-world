@@ -1,19 +1,20 @@
 package com.shared.pipeline;
 
 import java.util.List;
-import java.util.function.Function;
+
+import main.java.com.shared.pipeline.PaymentProcessStep;
 
 public class PaymentProviderProcessor {
-    private final List<Function<String, String>> steps;
+    private final List<PaymentProcessStep> steps;
 
-    public PaymentProviderProcessor(List<Function<String, String>> steps) {
+    public PaymentProviderProcessor(List<PaymentProcessStep> steps) {
         this.steps = steps;
     }
 
     public String process(String input) {
         String result = input;
-        for (Function<String, String> step : steps) {
-            result = step.apply(result);
+        for (PaymentProcessStep step : steps) {
+            result = step.execute(result);
         }
         return result;
     }

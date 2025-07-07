@@ -1,10 +1,10 @@
 
 package com.shared;
-import java.util.function.Function;
-
 import org.springframework.stereotype.Component;
+
+import main.java.com.shared.pipeline.PaymentProcessStep;
 @Component("invoke")
-public class InvokeStep implements Function<String, String> {
+public class InvokeStep implements PaymentProcessStep {
     public String apply(String input) {
         return "[INVOKED] " + input;
     }
