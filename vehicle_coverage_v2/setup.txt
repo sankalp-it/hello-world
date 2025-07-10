@@ -1,0 +1,51 @@
+# Setup Instructions for Vehicle Coverage App (Backend + Streamlit Frontend)
+
+## 🐍 Local Development
+
+### ▶️ Backend (FastAPI)
+```bash
+cd vehicle_coverage_app
+python3 -m venv venv
+source venv/bin/activate         # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### ▶️ Frontend (Streamlit)
+```bash
+cd vehicle_coverage_verifier_ui
+python3 -m venv venv
+source venv/bin/activate         # On Windows: venv\Scripts\activate
+pip install streamlit requests
+streamlit run app.py
+```
+
+## 🐳 Docker Build & Run
+
+### Build Individually
+```bash
+# Backend
+cd vehicle_coverage_app
+docker build -t vehicle-api .
+
+# Frontend
+cd vehicle_coverage_verifier_ui
+docker build -t vehicle-ui .
+```
+
+### Run Individually
+```bash
+docker run -p 8000:8000 vehicle-api
+docker run -p 8501:8501 -e API_ENDPOINT=http://localhost:8000 vehicle-ui
+```
+
+## 📦 Docker Compose
+
+### Run both together
+```bash
+docker-compose up --build
+```
+
+This starts:
+- http://localhost:8000 for the backend (FastAPI)
+- http://localhost:8501 for the frontend (Streamlit)

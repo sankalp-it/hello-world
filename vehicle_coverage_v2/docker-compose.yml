@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./vehicle_coverage_app
+    container_name: vehicle-backend
+    ports:
+      - "8000:8000"
+    healthcheck:
+      # test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/docs')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  frontend:
+    build: ./vehicle_coverage_verifier_ui
+    container_name: vehicle-ui
+    ports:
+      - "8501:8501"
+    environment:
+      BASE_URL: http://vehicle-backend:8000
+      ENDPOINT_PATH: /api/coverage
+    env_file:
+      - .env
+    depends_on:
+      backend:
+        condition: service_healthy
