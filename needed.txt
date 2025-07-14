@@ -1,0 +1,265 @@
+When a Bedrock agent calls a Lambda function, it relies on Action Groups which are defined using the OpenAPI Specification (OAS), currently supporting version 3.0.0. The OpenAPI schema dictates the structure of the data expected by the Lambda function and the response that the Lambda function should return to the Bedrock agent. 
+In essence, the OpenAPI schema acts as a contract between the Bedrock agent and your Lambda function, specifying:
+API operations: The different functions or actions the agent can perform.
+Parameters: The required inputs for each API operation, including their data types (string, number, boolean, etc.).
+Request body (if applicable): The structure and properties of any data passed in the request body.
+Response format: The expected structure of the output returned by the Lambda function. 
+Key aspects of the format
+JSON-serialized string: The OpenAPI schema is provided as a JSON-serialized string.
+Input and output parameters: Bedrock Agents use the OpenAPI schema to understand and route requests to the appropriate Lambda function, providing the function with structured input and processing its response.
+Parameter types: The Bedrock Agent Function Resolver automatically casts parameters to the appropriate type (string, number, boolean) based on the type defined in the action group. Currently, array types are received as strings. 
+Example (Conceptual)
+Let's say your Lambda function performs a weather lookup. Your OpenAPI schema would define an operation like "GetWeather" with a parameter "city" of type string. The Lambda function would then expect an event with this structure and return a response, potentially with weather details, in a format also defined in the OpenAPI specification. 
+In summary, the key is to ensure your Lambda function's input and output align with the OpenAPI specification defined in the Bedrock agent's action group. 
+AI responses may include mistakes. Learn more
+
+
+give code /json example
+Okay, let's break down the code/JSON examples for the Bedrock agent's interaction with a Lambda function.
+1. OpenAPI schema (defines the API)
+This schema tells the Bedrock agent what actions are available and how to call them. You'll define this either as a file in S3 or directly in the action group configuration.
+Example OpenAPI 3.0.0 JSON (for a Lambda that gets weather information):
+json
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "WeatherService",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/getWeather": {
+      "get": {
+        "operationId": "getWeather",
+        "summary": "Gets the current weather for a specified city",
+        "parameters": [
+          {
+            "name": "city",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The name of the city to get weather for"
+          },
+          {
+            "name": "unit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["celsius", "fahrenheit"],
+              "default": "celsius"
+            },
+            "description": "The unit of temperature (celsius or fahrenheit)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Weather data retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "city": {
+                      "type": "string"
+                    },
+                    "temperature": {
+                      "type": "number"
+                    },
+                    "unit": {
+                      "type": "string"
+                    },
+                    "condition": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+Use code with caution.
+
+openapi: Specifies the OpenAPI version.
+info: Provides metadata about the API (title, version).
+paths: Defines the available endpoints.
+/getWeather: Represents an API path.
+get: The HTTP method for the operation.
+operationId: A unique identifier for the operation ("getWeather").
+summary: A brief description of the operation.
+parameters: Defines the input parameters expected by the Lambda function.
+name: The parameter name (city, unit).
+in: Where the parameter is located (e.g., query for URL query string).
+required: Whether the parameter is mandatory.
+schema: The data type of the parameter.
+description: A description of the parameter.
+responses: Outlines the possible responses from the API.
+200: Indicates a successful response (HTTP status code).
+content: Specifies the response format (e.g., application/json).
+schema: Defines the structure of the JSON response.
+2. Lambda function input event (when Bedrock calls your Lambda)
+When the Bedrock agent determines it needs to invoke your Lambda function based on the OpenAPI schema, it sends an event with the following structure:
+Example Lambda Input Event JSON:
+json
+{
+  "messageVersion": "1.0",
+  "agent": {
+    "name": "WeatherAgent",
+    "id": "A1234567890",
+    "alias": "DEV",
+    "version": "DRAFT"
+  },
+  "inputText": "What's the weather in Seattle in Celsius?",
+  "sessionId": "abc123xyz",
+  "actionGroup": "WeatherService",
+  "apiPath": "/getWeather",
+  "httpMethod": "GET",
+  "parameters": [
+    {
+      "name": "city",
+      "type": "string",
+      "value": "Seattle"
+    },
+    {
+      "name": "unit",
+      "type": "string",
+      "value": "celsius"
+    }
+  ],
+  "requestBody": null, // Will be populated for POST/PUT requests with request body
+  "sessionAttributes": {
+    "someSessionData": "value"
+  },
+  "promptSessionAttributes": {
+    "somePromptSpecificData": "another_value"
+  }
+}
+Use code with caution.
+
+messageVersion: The version of the event format.
+agent: Details about the invoking agent.
+inputText: The user's original input.
+sessionId: A unique ID for the conversation session.
+actionGroup: The name of the action group invoked.
+apiPath: The API path from the OpenAPI schema.
+httpMethod: The HTTP method from the OpenAPI schema.
+parameters: A list of key-value pairs representing the parameters extracted from the user's input, based on the OpenAPI schema.
+requestBody: The request body (if applicable for the API method).
+sessionAttributes: Key-value pairs for general session state.
+promptSessionAttributes: Key-value pairs specific to the current prompt's session.
+3. Lambda function output (what your Lambda returns to Bedrock)
+Your Lambda function processes the input event and returns a JSON response in the following format:
+Example Lambda Output JSON:
+json
+{
+  "messageVersion": "1.0",
+  "response": {
+    "actionGroup": "WeatherService",
+    "apiPath": "/getWeather",
+    "httpMethod": "GET",
+    "httpStatusCode": 200,
+    "responseBody": {
+      "application/json": {
+        "body": "{\"city\": \"Seattle\", \"temperature\": 15, \"unit\": \"celsius\", \"condition\": \"Sunny\"}"
+      }
+    }
+  }
+}
+Use code with caution.
+
+messageVersion: The response message version.
+response: Contains the results of the action.
+actionGroup, apiPath, httpMethod: Echoes back the invocation details.
+httpStatusCode: The HTTP status code of the operation.
+responseBody: The actual response content.
+application/json: Indicates the content type.
+body: A JSON string representing the output of the Lambda function, conforming to the OpenAPI schema's response definition.
+Python Lambda function (conceptual)
+Your Python Lambda function would then parse this input and construct the output.
+python
+import json
+
+def lambda_handler(event, context):
+    print(f"Received event: {json.dumps(event, indent=2)}")
+
+    action_group = event['actionGroup']
+    api_path = event['apiPath']
+    http_method = event['httpMethod']
+    parameters = event['parameters']
+
+    city = None
+    unit = "celsius" # Default unit
+
+    for param in parameters:
+        if param['name'] == 'city':
+            city = param['value']
+        elif param['name'] == 'unit':
+            unit = param['value']
+
+    if action_group == "WeatherService" and api_path == "/getWeather" and http_method == "GET":
+        if city:
+            # Simulate getting weather data
+            # In a real scenario, you'd call an external API or database here
+            temperature = 15 if unit == "celsius" else 59
+            condition = "Sunny"
+
+            response_body = {
+                "city": city,
+                "temperature": temperature,
+                "unit": unit,
+                "condition": condition
+            }
+
+            return {
+                "messageVersion": "1.0",
+                "response": {
+                    "actionGroup": action_group,
+                    "apiPath": api_path,
+                    "httpMethod": http_method,
+                    "httpStatusCode": 200,
+                    "responseBody": {
+                        "application/json": {
+                            "body": json.dumps(response_body)
+                        }
+                    }
+                }
+            }
+        else:
+            return {
+                "messageVersion": "1.0",
+                "response": {
+                    "actionGroup": action_group,
+                    "apiPath": api_path,
+                    "httpMethod": http_method,
+                    "httpStatusCode": 400,
+                    "responseBody": {
+                        "application/json": {
+                            "body": json.dumps({"message": "City parameter is required."})
+                        }
+                    }
+                }
+            }
+    else:
+        return {
+            "messageVersion": "1.0",
+            "response": {
+                "actionGroup": action_group,
+                "apiPath": api_path,
+                "httpMethod": http_method,
+                "httpStatusCode": 404,
+                "responseBody": {
+                    "application/json": {
+                        "body": json.dumps({"message": "Unknown action or API path."})
+                    }
+                }
+            }
+        }
+
+Use code with caution.
+
+This example demonstrates the basic structure of the OpenAPI schema, the Lambda input event, and the expected Lambda output for an action group that interacts with a Lambda function to get weather information. Remember to replace the placeholder logic with your actual business logic when implementing. GitHub says provides an example for a soil pH analysis system that illustrates structuring OpenAPI schemas, Lambda functions, and agent configurations for API integration.
