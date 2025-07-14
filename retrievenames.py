@@ -1,28 +1,24 @@
-import json
-from my_repository import MYEmissionWarrantyRuleRepository
-
-# Initialize the repository with the table name
-repo = MYEmissionWarrantyRuleRepository('VehicleStandards')
-
 def lambda_handler(event, context):
     try:
-        # Support API Gateway or direct invocation
-        body = event.get('body')
-        if isinstance(body, str):
-            body = json.loads(body)
+        # Detect if body is present (API Gateway), otherwise treat event as direct
+        if 'body' in event:
+            body = event['body']
+            if isinstance(body, str):
+                body = json.loads(body)
+        else:
+            body = event  # invoked manually or from another Lambda
 
-        # Extract inputs from request
+        # Now validate inputs
         rule_year = body.get('rule_year')
         model = body.get('model')
 
-        # Validate required fields
         if not rule_year or not model:
             return {
                 'statusCode': 400,
                 'body': json.dumps({'error': 'Missing required parameters: rule_year or model'})
             }
 
-        # Query DynamoDB via repository
+        # Your repository call
         result = repo.get_vehicle_entry(rule_year, model)
 
         if not result:
@@ -31,7 +27,6 @@ def lambda_handler(event, context):
                 'body': json.dumps({'message': f'No standards found for {model} ({rule_year})'})
             }
 
-        # Return the result as JSON
         return {
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json'},
