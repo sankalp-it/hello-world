@@ -15,8 +15,16 @@ auth = AWS4Auth(credentials.access_key,
                 region,
                 service,
                 session_token=credentials.token)
+payload = {
+    "model_year": 2021,
+    "model": "Camry",
+    "make": "Toyota",
+    "trim": "XSE",
+    "original_purchase_date": "2021-07-01",
+    "current_mileage": 28000,
+    "part": "alternator"
+}
 
-payload = {"message": "hello from federated user"}
 
 response = requests.post(url, json=payload, auth=auth)
 print("Status:", response.status_code)
